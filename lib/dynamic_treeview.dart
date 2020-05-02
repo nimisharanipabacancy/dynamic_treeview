@@ -82,8 +82,7 @@ class _DynamicTreeViewOriState extends State<DynamicTreeView> {
           return data.getId();
         })
         .toSet()
-        .toList()
-          ..sort((i, j) => i.compareTo(j));
+        .toList();
 
     var widgets = List<ParentWidget>();
     k.forEach((f) {
@@ -121,6 +120,7 @@ class _DynamicTreeViewOriState extends State<DynamicTreeView> {
   _buildChildren(List<BaseData> data) {
     var cW = List<Widget>();
     for (var k in data) {
+      var icon = k.getIcon();
       var c = _getChildrenFromParent(k.getId());
       if ((c?.length ?? 0) > 0) {
         //has children
@@ -135,10 +135,11 @@ class _DynamicTreeViewOriState extends State<DynamicTreeView> {
               'id': '${k.getId()}',
               'parent_id': '${k.getParentId()}',
               'title': '${k.getTitle()}',
-              'extra': '${k.getExtraData()}'
+              'extra': k.getExtraData()
             });
           },
           contentPadding: widget.config.childrenPaddingEdgeInsets,
+          leading: icon != null ? icon : null,
           title: Text(
             "${k.getTitle()}",
             style: widget.config.childrenTextStyle,
@@ -150,9 +151,7 @@ class _DynamicTreeViewOriState extends State<DynamicTreeView> {
   }
 
   List<BaseData> _getChildrenFromParent(String parentId) {
-    return widget.data
-        .where((data) => data.getParentId() == parentId.toString())
-        .toList();
+    return widget.data.where((data) => data.getParentId() == parentId).toList();
   }
 
   @override
@@ -262,14 +261,17 @@ class ParentWidget extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _ParentWidgetState createState() => _ParentWidgetState();
+  _ParentWidgetState createState() =>
+      _ParentWidgetState(shouldExpand: config.expandAll);
 }
 
 class _ParentWidgetState extends State<ParentWidget>
     with SingleTickerProviderStateMixin {
-  bool shouldExpand = false;
+  bool shouldExpand;
   Animation<double> sizeAnimation;
   AnimationController expandController;
+
+  _ParentWidgetState({@required this.shouldExpand});
 
   @override
   void dispose() {
@@ -280,6 +282,9 @@ class _ParentWidgetState extends State<ParentWidget>
   @override
   void initState() {
     prepareAnimation();
+    if (shouldExpand) {
+      expandController.forward();
+    }
     super.initState();
   }
 
@@ -296,6 +301,7 @@ class _ParentWidgetState extends State<ParentWidget>
 
   @override
   Widget build(BuildContext context) {
+    var icon = widget.baseData.getIcon();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -308,25 +314,28 @@ class _ParentWidgetState extends State<ParentWidget>
             map['extra'] = widget.baseData.getExtraData();
             if (widget.onTap != null) widget.onTap(map);
           },
+          leading: icon != null ? icon : null,
           title: Text(widget.baseData.getTitle(),
               style: widget.config.parentTextStyle),
           contentPadding: widget.config.parentPaddingEdgeInsets,
-          trailing: IconButton(
-            onPressed: () {
-              setState(() {
-                shouldExpand = !shouldExpand;
-              });
-              if (shouldExpand) {
-                expandController.forward();
-              } else {
-                expandController.reverse();
-              }
-            },
-            icon: RotationTransition(
-              turns: sizeAnimation,
-              child: widget.config.arrowIcon,
-            ),
-          ),
+          trailing: (widget.children == null || widget.children.length == 0)
+              ? null
+              : IconButton(
+                  onPressed: () {
+                    setState(() {
+                      shouldExpand = !shouldExpand;
+                    });
+                    if (shouldExpand) {
+                      expandController.forward();
+                    } else {
+                      expandController.reverse();
+                    }
+                  },
+                  icon: RotationTransition(
+                    turns: sizeAnimation,
+                    child: widget.config.arrowIcon,
+                  ),
+                ),
         ),
         ChildWidget(
           children: widget.children,
@@ -375,6 +384,8 @@ abstract class BaseData {
 
   ///Any extra data you want to get when tapped on children
   Map<String, dynamic> getExtraData();
+
+  Widget getIcon();
 }
 
 class Config {
@@ -382,6 +393,7 @@ class Config {
   final TextStyle childrenTextStyle;
   final EdgeInsets childrenPaddingEdgeInsets;
   final EdgeInsets parentPaddingEdgeInsets;
+  final bool expandAll;
 
   ///Animated icon when tile collapse/expand
   final Widget arrowIcon;
@@ -398,5 +410,6 @@ class Config {
       this.childrenPaddingEdgeInsets =
           const EdgeInsets.only(left: 15.0, top: 0, bottom: 0),
       this.rootId = "1",
+      this.expandAll = false,
       this.arrowIcon = const Icon(Icons.keyboard_arrow_down)});
 }
