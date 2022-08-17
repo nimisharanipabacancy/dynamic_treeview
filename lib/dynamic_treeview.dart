@@ -122,7 +122,7 @@ class _DynamicTreeViewOriState extends State<DynamicTreeView> {
     for (var k in data) {
       var icon = k.getIcon();
       var c = _getChildrenFromParent(k.getId());
-      if ((c?.length ?? 0) > 0) {
+      if (c.length  > 0) {
         //has children
         var name = widget.data
             .firstWhere((d) => d.getId() == k.getId().toString())
@@ -131,7 +131,7 @@ class _DynamicTreeViewOriState extends State<DynamicTreeView> {
       } else {
         cW.add(ListTile(
           onTap: () {
-            widget?.onTap!({
+            widget.onTap!({
               'id': '${k.getId()}',
               'parent_id': '${k.getParentId()}',
               'title': '${k.getTitle()}',
