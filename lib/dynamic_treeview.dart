@@ -122,7 +122,7 @@ class _DynamicTreeViewOriState extends State<DynamicTreeView> {
     for (var k in data) {
       var icon = k.getIcon();
       var c = _getChildrenFromParent(k.getId());
-      if (c.length  > 0) {
+      if (c.length > 0) {
         //has children
         var name = widget.data
             .firstWhere((d) => d.getId() == k.getId().toString())
@@ -142,7 +142,9 @@ class _DynamicTreeViewOriState extends State<DynamicTreeView> {
           leading: icon != null ? icon : null,
           title: Text(
             "${k.getTitle()}",
-            style: widget.config.childrenTextStyle,
+            style: k.getStatus()
+                ? widget.config.childrenTextStyle
+                : widget.config.disableChildrenTextStyle,
           ),
         ));
       }
@@ -217,10 +219,11 @@ class _ChildWidgetState extends State<ChildWidget>
         AnimationController(vsync: this, duration: Duration(milliseconds: 300));
     Animation curve =
         CurvedAnimation(parent: expandController, curve: Curves.fastOutSlowIn);
-    sizeAnimation = Tween(begin: 0.0, end: 1.0).animate(curve as Animation<double>)
-      ..addListener(() {
-        setState(() {});
-      });
+    sizeAnimation =
+        Tween(begin: 0.0, end: 1.0).animate(curve as Animation<double>)
+          ..addListener(() {
+            setState(() {});
+          });
   }
 
   @override
@@ -293,10 +296,11 @@ class _ParentWidgetState extends State<ParentWidget>
         AnimationController(vsync: this, duration: Duration(milliseconds: 300));
     Animation curve =
         CurvedAnimation(parent: expandController, curve: Curves.fastOutSlowIn);
-    sizeAnimation = Tween(begin: 0.0, end: 0.5).animate(curve as Animation<double>)
-      ..addListener(() {
-        setState(() {});
-      });
+    sizeAnimation =
+        Tween(begin: 0.0, end: 0.5).animate(curve as Animation<double>)
+          ..addListener(() {
+            setState(() {});
+          });
   }
 
   @override
@@ -316,7 +320,9 @@ class _ParentWidgetState extends State<ParentWidget>
           },
           leading: icon != null ? icon : null,
           title: Text(widget.baseData!.getTitle(),
-              style: widget.config!.parentTextStyle),
+              style: widget.baseData!.getStatus()
+                  ? widget.config!.parentTextStyle
+                  : widget.config!.disableParentTextStyle),
           contentPadding: widget.config!.parentPaddingEdgeInsets,
           trailing: (widget.children == null || widget.children!.length == 0)
               ? null
@@ -386,11 +392,16 @@ abstract class BaseData {
   Map<String, dynamic> getExtraData();
 
   Widget getIcon();
+
+  /// Status of parent/child
+  bool getStatus();
 }
 
 class Config {
   final TextStyle parentTextStyle;
+  final TextStyle disableParentTextStyle;
   final TextStyle childrenTextStyle;
+  final TextStyle disableChildrenTextStyle;
   final EdgeInsets childrenPaddingEdgeInsets;
   final EdgeInsets parentPaddingEdgeInsets;
   final bool expandAll;
@@ -405,8 +416,11 @@ class Config {
   const Config(
       {this.parentTextStyle =
           const TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+      this.disableParentTextStyle =
+          const TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
       this.parentPaddingEdgeInsets = const EdgeInsets.all(6.0),
       this.childrenTextStyle = const TextStyle(color: Colors.black),
+      this.disableChildrenTextStyle = const TextStyle(color: Colors.grey),
       this.childrenPaddingEdgeInsets =
           const EdgeInsets.only(left: 15.0, top: 0, bottom: 0),
       this.rootId = "1",
